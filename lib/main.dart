@@ -70,8 +70,9 @@ class Post {
   final int voted_count;
   final int created_at;
 
-  Post({this.title, required this.thumbnail, this.avatar, this.description, required this.readed_count,
-    this.voted_count, this.created_at});
+  Post(
+      {required this.title, required this.thumbnail, required this.avatar, required this.description, required this.readed_count,
+        required this.voted_count, required this.created_at});
 
   factory Post.fromJSON(Map<String, dynamic> json) {
     return Post(
@@ -84,3 +85,4 @@ class Post {
         created_at: json['created_at']
     );
   }
+}
