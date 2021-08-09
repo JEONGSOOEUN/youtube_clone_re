@@ -23,15 +23,16 @@ class HttpExampleWidget extends StatefulWidget {
 }
 
 class _HttpExampleWidgetState extends State<HttpExampleWidget> {
-  String _text = '';
+  List<Post> _posts = [];
 
   void _fetchPosts() async {
     final response =await http.get('http://dummy.amuz.co.kr/');
     final List<Post> parsedResponse = jsonDecode(response.body)
-        .map<Post>((json) => Post.fromJson(json))
+        .map<Post>((json) => Post.fromJSON(json))
         .toList();
     setState(() {
-      
+      _posts.clear();
+      _posts.addAll(parsedResponse);
     });
   }
 
@@ -44,11 +45,17 @@ class _HttpExampleWidgetState extends State<HttpExampleWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('SOON APP'),
-      ),
       body: Center(
-        child: Text(_text),
+        child: ListView.builder(
+          itemCount: this._posts.length,
+          itemBuilder: (context, index) {
+            final post = this._posts[index];
+            return ListTile(
+              title: Text(post.title),
+              subtitle: Text('Id: ${post.title}  UserId: ${post.avatar}'),
+            );
+          },
+        ),
       ),
     );
   }
@@ -63,10 +70,10 @@ class Post {
   final int voted_count;
   final int created_at;
 
-  Post({this.title, this.thumbnail, this.avatar, this.description, this.readed_count,
+  Post({this.title, required this.thumbnail, this.avatar, this.description, required this.readed_count,
     this.voted_count, this.created_at});
 
-  factory Post.fromJson(Map<String, dynamic> json) {
+  factory Post.fromJSON(Map<String, dynamic> json) {
     return Post(
         title: json['title'],
         thumbnail: json['thumbnail'],
