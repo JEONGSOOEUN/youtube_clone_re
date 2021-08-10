@@ -1,8 +1,10 @@
-import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:youtube_clone_re/api.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:intl/intl.dart';
 
-
+import 'api.dart';
 
 void main() => runApp(new MyApp());
 
@@ -26,15 +28,18 @@ class _HttpExampleWidgetState extends State<HttpExampleWidget> {
   List<Post> _posts = [];
 
   void _fetchPosts() async {
-    final response =await http.get('http://dummy.amuz.co.kr/');
-    final List<Post> parsedResponse = jsonDecode(response.body)
-        .map<Post>((json) => Post.fromJSON(json))
-        .toList();
+  List<Post> parsedResponse = (await doApiGET(getDummy().dummy)).cast<Post>();
+
     setState(() {
       _posts.clear();
       _posts.addAll(parsedResponse);
     });
+
+    _refreshController.refreshCompleted();
   }
+
+  RefreshController _refreshController =
+  RefreshController(initialRefresh: false);
 
   @override
   void initState() {
@@ -42,47 +47,71 @@ class _HttpExampleWidgetState extends State<HttpExampleWidget> {
     _fetchPosts();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body:SmartRefresher(
+        enablePullDown: true,
+        enablePullUp: false,
+        controller: _refreshController,
+        onRefresh: _fetchPosts,
         child: ListView.builder(
-          itemCount: this._posts.length,
-          itemBuilder: (context, index) {
-            final post = this._posts[index];
-            return ListTile(
-              title: Text(post.title),
-              subtitle: Text('Id: ${post.title}  UserId: ${post.avatar}'),
-            );
-          },
-        ),
+              padding: EdgeInsets.all(10),
+              itemCount: this._posts.length,
+              itemBuilder: (context, index) {
+                final post = this._posts[index];
+                return Column(
+                 children: [
+                   Image.network('${post.thumbnail}',
+                   fit: BoxFit.fill,),
+                   SizedBox(
+                     height: 10.0,
+                   ),
+                   Text('${post.title}',
+                     style: TextStyle(fontSize: 15.0),),
+                   Row(
+                     mainAxisAlignment: MainAxisAlignment.start,
+                     children: [
+                     CircleAvatar(
+                       backgroundImage: NetworkImage('${post.avatar}'),
+                     ),
+                     SizedBox(
+                       width: 10.0,
+                     ),
+                     Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      Text('조회수 : ${post.readed_count}',
+                        style: TextStyle(fontSize: 12.0),),
+                      Text('게시일 : '+ readTimestamp(post.created_at.toInt()),
+                      style: TextStyle(fontSize: 12.0),)
+                      ]),
+                   ]),
+                   SizedBox(
+                     height: 5.0,
+                   ),
+                   Text('${post.description}'),
+                   SizedBox(
+                     height: 20.0,
+                   )
+                 ],
+                );
+              },
+            ),
       ),
-    );
+      );
   }
 }
 
-class Post {
-  final String title;
-  final String thumbnail;
-  final String avatar;
-  final String description;
-  final int readed_count;
-  final int voted_count;
-  final int created_at;
+String readTimestamp(int timestamp) {
+  var origin = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+  String createDate = DateFormat('yyyy-MM-dd').format(origin);
+  return createDate;
+}
 
-  Post(
-      {required this.title, required this.thumbnail, required this.avatar, required this.description, required this.readed_count,
-        required this.voted_count, required this.created_at});
+Widget _buildPost() {
+  return Scaffold(
 
-  factory Post.fromJSON(Map<String, dynamic> json) {
-    return Post(
-        title: json['title'],
-        thumbnail: json['thumbnail'],
-        avatar: json['avatar'],
-        description: json['description'],
-        readed_count: json['readed_count'],
-        voted_count: json['voted_count'],
-        created_at: json['created_at']
-    );
-  }
+  );
 }
